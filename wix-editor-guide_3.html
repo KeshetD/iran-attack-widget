@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>עורך וידג'ט תקיפה</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      direction: rtl;
+      background: #0f0f1a;
+      color: #eee;
+      padding: 30px 24px;
+      max-width: 720px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    h1 { font-size: 22px; color: #e8192c; margin-bottom: 6px; }
+    .sub { font-size: 13px; color: #777; margin-bottom: 30px; }
+    h2 { font-size: 15px; color: #fff; margin: 28px 0 10px; }
+    .highlight { color: #f7941d; font-weight: bold; }
+    .green { color: #00b050; }
+
+    /* LAYOUT */
+    .main-row { display: flex; gap: 24px; align-items: flex-start; }
+
+    /* EDITOR */
+    .editor-section {
+      background: #1a1a2e;
+      border-radius: 10px;
+      padding: 20px;
+      flex: 1;
+    }
+    .editor-section h2 { margin-top: 0; }
+    .field-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+    .field-row label { font-size: 13px; color: #aaa; width: 150px; flex-shrink: 0; }
+    .field-row input {
+      flex: 1; background: #0f0f1a; border: 1px solid #333;
+      border-radius: 6px; padding: 7px 12px; color: #fff; font-size: 14px; outline: none;
+    }
+    .field-row input:focus { border-color: #e8192c; }
+    .field-row input[type=number] { font-weight: bold; text-align: center; max-width: 72px; }
+    .field-row .unit { font-size: 13px; color: #555; }
+    .divider-dark { border: none; border-top: 1px solid #2a2a3e; margin: 14px 0; }
+    .gen-btn {
+      width: 100%; background: #e8192c; color: #fff; border: none;
+      border-radius: 6px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px;
+    }
+    .gen-btn:hover { background: #c0101e; }
+    .success { color: #00b050; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+
+    /* PREVIEW */
+    .preview-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .preview-label { font-size: 11px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+
+    /* WIDGET */
+    .widget {
+      background: #fff; border: 1px solid #ddd; width: 240px;
+      font-family: Arial, Helvetica, sans-serif; direction: rtl;
+    }
+    .widget-header {
+      background: #e8192c; color: #fff; text-align: center;
+      padding: 10px 14px; font-size: 15px; font-weight: bold;
+    }
+    .widget-body { padding: 14px 16px; }
+    .stat-block { margin-bottom: 16px; text-align: center; }
+    .stat-block:last-child { margin-bottom: 0; }
+
+    /* CIRCULAR PROGRESS */
+    .circle-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 8px; }
+    .circle-wrap svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+    .circle-bg { fill: none; stroke: #e0e0e0; stroke-width: 8; }
+    .circle-arc {
+      fill: none; stroke-width: 8; stroke-linecap: round;
+      transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
+    }
+    .circle-text {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      text-align: center;
+    }
+    .circle-pct {
+      font-size: 22px; font-weight: 900; line-height: 1;
+      transition: color 0.4s ease;
+    }
+
+
+    .stat-label { font-size: 12px; color: #555; text-align: center; }
+    .widget-divider { border: none; border-top: 1px solid #e5e5e5; margin: 12px 0; }
+
+    /* CODE */
+    .code-section { margin-top: 28px; }
+    textarea {
+      width: 100%; background: #0a0a14; border: 1px solid #333; border-radius: 6px;
+      padding: 14px; color: #4ec9b0; font-family: monospace; font-size: 12px;
+      direction: ltr; text-align: left; resize: vertical; min-height: 140px; margin: 10px 0; outline: none;
+    }
+    .copy-btn {
+      background: #e8192c; color: #fff; border: none; border-radius: 6px;
+      padding: 9px 22px; font-size: 13px; cursor: pointer; font-weight: bold;
+    }
+    .copy-btn:hover { background: #c0101e; }
+
+    /* STEPS */
+    .step {
+      background: #1a1a2e; border-right: 3px solid #e8192c;
+      padding: 13px 15px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 14px;
+    }
+    .step strong { color: #f7941d; display: block; margin-bottom: 4px; font-size: 13px; }
+    .note {
+      background: #1a1a2e; border: 1px solid #333; border-radius: 8px;
+      padding: 14px 16px; font-size: 13px; color: #aaa; margin-top: 24px;
+    }
+    .note strong { color: #f7941d; }
+  </style>
+</head>
+<body>
+
+  <h1>🛠️ עורך וידג'ט — סיכויים לתקיפה</h1>
+  <p class="sub">עדכן את הערכים — התצוגה מתעדכנת בזמן אמת</p>
+
+  <div class="main-row">
+
+    <!-- EDITOR -->
+    <div class="editor-section">
+      <h2>✏️ עריכת נתונים</h2>
+      <div class="field-row">
+        <label>אחוז שורה ראשונה</label>
+        <input type="number" id="in_p1" min="0" max="100" value="2">
+        <span class="unit">%</span>
+      </div>
+      <div class="field-row">
+        <label>תווית שורה ראשונה</label>
+        <input type="text" id="in_l1" value="ב-24 השעות הקרובות">
+      </div>
+      <hr class="divider-dark">
+      <div class="field-row">
+        <label>אחוז שורה שנייה</label>
+        <input type="number" id="in_p2" min="0" max="100" value="1">
+        <span class="unit">%</span>
+      </div>
+      <div class="field-row">
+        <label>תווית שורה שנייה</label>
+        <input type="text" id="in_l2" value="בשבוע הקרוב">
+      </div>
+      <button class="gen-btn" onclick="generateCode()">⚡ צור קוד להטמעה</button>
+      <div class="success" id="genSuccess">✓ הקוד מוכן להעתקה!</div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-col">
+      <div class="preview-label">תצוגה מקדימה</div>
+      <div class="widget">
+        <div class="widget-header">הסיכויים לתקיפה</div>
+        <div class="widget-body">
+
+          <div class="stat-block">
+            <div class="circle-wrap">
+              <svg viewBox="0 0 100 100">
+                <circle class="circle-bg" cx="50" cy="50" r="38"/>
+                <circle class="circle-arc" id="prev_arc1" cx="50" cy="50" r="38"
+                  stroke="#00b050"
+                  stroke-dasharray="238.76"
+                  stroke-dashoffset="238.76"/>
+              </svg>
+              <div class="circle-text">
+                <span class="circle-pct" id="prev_p1" style="color:#00b050">2%</span>
+              </div>
+            </div>
+            <div class="stat-label" id="prev_l1">ב-24 השעות הקרובות</div>
+          </div>
+
+          <hr class="widget-divider">
+
+          <div class="stat-block">
+            <div class="circle-wrap">
+              <svg viewBox="0 0 100 100">
+                <circle class="circle-bg" cx="50" cy="50" r="38"/>
+                <circle class="circle-arc" id="prev_arc2" cx="50" cy="50" r="38"
+                  stroke="#00b050"
+                  stroke-dasharray="238.76"
+                  stroke-dashoffset="238.76"/>
+              </svg>
+              <div class="circle-text">
+                <span class="circle-pct" id="prev_p2" style="color:#00b050">1%</span>
+              </div>
+            </div>
+            <div class="stat-label" id="prev_l2">בשבוע הקרוב</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CODE OUTPUT -->
+  <div class="code-section">
+    <h2>📋 קוד להטמעה ב-Wix</h2>
+    <p style="font-size:13px;color:#777">לחץ "צור קוד" ואז העתק והדבק ב-Wix HTML Widget</p>
+    <textarea id="codeOutput" readonly placeholder="לחץ 'צור קוד' למעלה..."></textarea>
+    <button class="copy-btn" onclick="copyCode()">העתק קוד</button>
+  </div>
+
+  <!-- HOW TO -->
+  <h2>🖥️ איך להטמיע ב-Wix</h2>
+  <div class="step">
+    <strong>1. פתח את עורך Wix</strong>
+    עבור לדף שבו תרצה להוסיף את הוידג'ט
+  </div>
+  <div class="step">
+    <strong>2. הוסף אלמנט HTML</strong>
+    לחץ <span class="highlight">+</span> ← <span class="highlight">Embed & Social</span> ← <span class="highlight">Custom Embeds</span> ← <span class="highlight">Embed a Widget</span>
+  </div>
+  <div class="step">
+    <strong>3. הדבק את הקוד</strong>
+    לחץ <span class="highlight">Enter Code</span>, מחק הכל, הדבק את הקוד ← <span class="highlight">Apply</span> ← פרסם
+    <span class="green" style="display:block;margin-top:4px">✓ הוידג'ט חי באתר!</span>
+  </div>
+
+  <div class="note">
+    <strong>💡 טיפ:</strong> שמור דף זה בסימניות. בכל עדכון — שנה ערכים, לחץ "צור קוד", העתק, הדבק ב-Wix.
+  </div>
+
+  <script>
+    const CIRCUMFERENCE = 2 * Math.PI * 38; // 238.76
+
+    function getColor(p) {
+      return p <= 33 ? '#00b050' : p <= 66 ? '#f7941d' : '#e8192c';
+    }
+
+    function setCircle(pctId, arcId, labelId, p, l) {
+      const c = getColor(p);
+      const offset = CIRCUMFERENCE - (p / 100) * CIRCUMFERENCE;
+
+      document.getElementById(pctId).textContent = p + '%';
+      document.getElementById(pctId).style.color = c;
+      document.getElementById(arcId).style.stroke = c;
+      document.getElementById(arcId).style.strokeDashoffset = offset;
+      document.getElementById(labelId).textContent = l;
+    }
+
+    function updatePreview(p1, l1, p2, l2) {
+      setCircle('prev_p1', 'prev_arc1', 'prev_l1', p1, l1);
+      setCircle('prev_p2', 'prev_arc2', 'prev_l2', p2, l2);
+    }
+
+    function getCode(p1, l1, p2, l2) {
+      const c1 = getColor(p1), c2 = getColor(p2);
+      const circ = CIRCUMFERENCE.toFixed(2);
+      const off1 = (CIRCUMFERENCE - (p1/100)*CIRCUMFERENCE).toFixed(2);
+      const off2 = (CIRCUMFERENCE - (p2/100)*CIRCUMFERENCE).toFixed(2);
+
+      return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;font-family:Arial,Helvetica,sans-serif;direction:rtl}
+.widget{background:#fff;border:1px solid #ddd;width:100%;max-width:280px}
+.widget-header{background:#e8192c;color:#fff;text-align:center;padding:10px 14px;font-size:16px;font-weight:bold}
+.widget-body{padding:18px 20px}
+.stat-block{margin-bottom:20px;text-align:center}
+.stat-block:last-child{margin-bottom:0}
+.circle-wrap{position:relative;width:110px;height:110px;margin:0 auto 8px}
+.circle-wrap svg{width:110px;height:110px;transform:rotate(-90deg)}
+.circle-bg{fill:none;stroke:#e0e0e0;stroke-width:8}
+.circle-arc{fill:none;stroke-width:8;stroke-linecap:round}
+.circle-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.circle-pct{font-size:24px;font-weight:900;line-height:1;display:block}
+.stat-label{font-size:13px;color:#555;text-align:center}
+.divider{border:none;border-top:1px solid #e5e5e5;margin:14px 0}
+</style>
+</head>
+<body>
+<div class="widget">
+<div class="widget-header">הסיכויים לתקיפה</div>
+<div class="widget-body">
+<div class="stat-block">
+<div class="circle-wrap">
+<svg viewBox="0 0 100 100">
+<circle class="circle-bg" cx="50" cy="50" r="38"/>
+<circle class="circle-arc" cx="50" cy="50" r="38" stroke="${c1}" stroke-dasharray="${circ}" stroke-dashoffset="${off1}"/>
+</svg>
+<div class="circle-text">
+<span class="circle-pct" style="color:${c1}">${p1}%</span>
+</div>
+</div>
+<div class="stat-label">${l1}</div>
+</div>
+<hr class="divider">
+<div class="stat-block">
+<div class="circle-wrap">
+<svg viewBox="0 0 100 100">
+<circle class="circle-bg" cx="50" cy="50" r="38"/>
+<circle class="circle-arc" cx="50" cy="50" r="38" stroke="${c2}" stroke-dasharray="${circ}" stroke-dashoffset="${off2}"/>
+</svg>
+<div class="circle-text">
+<span class="circle-pct" style="color:${c2}">${p2}%</span>
+</div>
+</div>
+<div class="stat-label">${l2}</div>
+</div>
+</div>
+</div>
+</body>
+</html>`;
+    }
+
+    function getValues() {
+      return {
+        p1: Math.min(100, Math.max(0, parseInt(document.getElementById('in_p1').value) || 0)),
+        l1: document.getElementById('in_l1').value.trim() || 'ב-24 השעות הקרובות',
+        p2: Math.min(100, Math.max(0, parseInt(document.getElementById('in_p2').value) || 0)),
+        l2: document.getElementById('in_l2').value.trim() || 'בשבוע הקרוב'
+      };
+    }
+
+    function generateCode() {
+      const {p1,l1,p2,l2} = getValues();
+      updatePreview(p1, l1, p2, l2);
+      document.getElementById('codeOutput').value = getCode(p1, l1, p2, l2);
+      const s = document.getElementById('genSuccess');
+      s.style.display = 'block';
+      setTimeout(() => s.style.display = 'none', 2500);
+    }
+
+    function copyCode() {
+      const ta = document.getElementById('codeOutput');
+      if (!ta.value) generateCode();
+      ta.select();
+      document.execCommand('copy');
+      event.target.textContent = 'הועתק ✓';
+      setTimeout(() => event.target.textContent = 'העתק קוד', 2000);
+    }
+
+    ['in_p1','in_p2','in_l1','in_l2'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const {p1,l1,p2,l2} = getValues();
+        updatePreview(p1, l1, p2, l2);
+      });
+    });
+
+    // Init
+    updatePreview(2, 'ב-24 השעות הקרובות', 1, 'בשבוע הקרוב');
+  </script>
+</body>
+</html>
